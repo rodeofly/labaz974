@@ -1,86 +1,129 @@
 // src/app/professor/editor/[id]/page.tsx
 'use client';
 
-// ... (imports existants)
-import { Edit3, Code, Save } from 'lucide-react';
-import { MAZE_CONFIG } from '@/plugins/maze/config'; // ✅ AJOUTER CET IMPORT
+import React, { useState, useMemo } from 'react';
+import { getPlugin } from '@/plugins/registry'; // Assurez-vous que ce chemin est correct
+import { Level, LevelData } from '@/types'; // Assurez-vous que ce chemin est correct
+import { Edit3, Code, Save, Grid, Map } from 'lucide-react'; 
+import { MAZE_CONFIG } from '@/plugins/maze/config'; // Importez MAZE_CONFIG en haut du fichier
 
-// ... (MOCK_LEVEL_DATA)
+// --- TYPES (À adapter si vos types sont dans un fichier séparé) ---
+interface EditorPageProps {
+    params: { id: string; }
+}
+// -----------------------------------------------------------------
+
+
+// Données Mockées du Niveau (Simule la récupération Backend)
+const MOCK_LEVEL_DATA: Level = {
+    id: 'lvl_a1',
+    plugin_id: 'MAZE', 
+    name: 'Niveau d\'Introduction',
+    description: 'Créez votre premier Labyrinthe',
+    level_data: { 
+        grid: [[4, 4, 4, 4, 4], [4, 2, 1, 3, 4], [4, 4, 4, 4, 4]], 
+        startPos: { x: 1, y: 1, dir: 0 } // dir: 0 (Est)
+    },
+    conditions_de_sortie: []
+};
 
 // Simuler la fonction getLevelData
-// Vous avez besoin de définir cette fonction mockée, car elle est appelée
 const getLevelData = (id: string): Level | null => {
-    // Dans une vraie application, elle chargerait les données de l'API par 'id'
-    // Pour l'instant, elle renvoie le mock si l'ID correspond, sinon null.
+    // Dans une vraie application, elle chargerait les données de l'API
     return id === 'lvl_a1' ? MOCK_LEVEL_DATA : null;
 };
 
 
 export default function LevelEditorPage({ params }: EditorPageProps) {
-    const { id } = params;
-    const [level, setLevel] = useState<Level>(MOCK_LEVEL_DATA);
+    
+    // 1. Correction de l'avertissement Next.js: Destructuration directe
+    const { id: levelId } = params; 
+    
+    // 2. Chargement du niveau (Simulé)
+    const initialLevel = getLevelData(levelId) || MOCK_LEVEL_DATA;
+    const [level, setLevel] = useState<Level>(initialLevel);
 
-    // ❌ ANCIEN : levelId et levelData étaient inutiles et en conflit avec l'état 'level'
-    // const levelId = params.id; 
-    // const levelData: Level | null = getLevelData(levelId); 
-
-    // ✅ NOUVEAU : On utilise directement les données de l'état 'level' (qui est initialisé par le mock)
-    // On sécurise l'accès à la grille
-    const gridDataForRunner = level.level_data?.grid || MAZE_CONFIG.defaultGrid; 
-    const startPosForRunner = level.level_data?.startPos || MOCK_LEVEL_DATA.level_data.startPos; 
-
-    // ✅ On utilise level.plugin_id pour le plugin
+    // 3. Récupération du plugin et des composants
     const plugin = useMemo(() => getPlugin(level.plugin_id), [level.plugin_id]);
     const EditorComponent = plugin?.EditorComponent;
-    const PluginRunner = plugin?.RenderComponent; // Utiliser RenderComponent du plugin
+    const PluginRunner = plugin?.RenderComponent; 
+    
+    // 4. Fonction de rappel pour mettre à jour l'état du niveau
+    const handleLevelDataUpdate = (newLevelData: LevelData) => {
+        // newLevelData contient la nouvelle grille, startPos, etc.
+        setLevel(prevLevel => ({
+            ...prevLevel,
+            level_data: {
+                ...prevLevel.level_data,
+                // On fusionne les nouvelles données avec les anciennes
+                ...newLevelData, 
+            },
+        }));
+    };
 
-
-    // ... (le reste du code)
-
-    if (!EditorComponent || !PluginRunner) { // ✅ Ajouté PluginRunner au check
+    // 5. Vérification et Fallback
+    if (!EditorComponent || !PluginRunner) {
         return <div className="text-red-500 p-8">Erreur : Plugin {level.plugin_id} non trouvé ou incomplet.</div>;
     }
 
-    const currentLevelData = level.level_data || MOCK_LEVEL_DATA.level_data;
-    const gridData = level.level_data?.grid || MOCK_LEVEL_DATA.level_data.grid;
-
+    // 6. Préparation des props pour Runner et Editor (basé sur l'état 'level')
+    const currentLevelData = level.level_data;
+    const gridData = currentLevelData?.grid || MAZE_CONFIG.defaultGrid;
+    const startPos = currentLevelData?.startPos || { x: 1, y: 1, dir: 1 };
+    
+    const runnerProps = {
+        levelData: { grid: gridData, startPos: startPos },
+        playerPos: startPos,
+        playerDir: startPos.dir,
+    };
+    
     return (
-        <div className="flex-1 flex justify-center items-center">
-            {/* L'aperçu du Runner a besoin de la position initiale du joueur */}
-            <PluginRunner 
-                levelData={{ 
-                    // Utilisez la grille de l'état local 'level' ou le mock
-                    grid: currentLevelData.grid, 
-                    startPos: currentLevelData.startPos 
-                }}
-                // ✅ AJOUTEZ CES PROPS : elles définissent où et comment le robot est affiché
-                playerPos={currentLevelData.startPos}
-                playerDir={currentLevelData.startPos.dir}
-            />
-        </div>
+        <div className="min-h-screen bg-gray-100 p-4"> 
+            
+            {/* Titre et actions */}
+            <header className="flex justify-between items-center mb-4">
+                <h1 className="text-3xl font-bold text-gray-800 flex items-center">
+                    <Edit3 className="w-7 h-7 mr-3" /> Éditeur de Niveau : {level.name}
+                </h1>
+                <button className="bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-green-700 transition flex items-center">
+                    <Save className="w-5 h-5 mr-2" /> Enregistrer le Niveau
+                </button>
+            </header>
 
-        {/* 2. Zone d'édition Blockly (2/3 de l'écran) */}
-        <div className="col-span-2 bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200">
-            <h3 className="bg-gray-200 p-3 text-lg font-medium border-b flex items-center">
-                <Code className="w-5 h-5 mr-2" /> Logique Blockly & Meta-données
-            </h3>
-            <div className="p-4 h-[calc(100%-48px)] flex items-center justify-center bg-gray-50">
+            {/* Grille Principale (Éditeur 2/3, Preview 1/3) */}
+            <div className="grid grid-cols-3 gap-4 h-[85vh]">
                 
-                {/* ❌ ANCIEN : Contenu statique */}
-                {/* <div className="text-center text-gray-500">
-                    <p className="italic mb-4">...</p>
-                    <code className="text-sm block mt-2 p-3 bg-gray-100 rounded-lg whitespace-pre-wrap text-left border border-gray-300">
-                        {plugin?.getToolboxXML()}
-                    </code>
-                </div> */}
+                {/* 1. Zone d'édition (2/3 de l'écran) - COLONNE 1 */}
+                <div className="col-span-2 flex flex-col bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200">
+                    <h3 className="bg-gray-200 p-3 text-lg font-medium border-b flex items-center">
+                        <Grid className="w-5 h-5 mr-2" /> Éditeur de Grille et Logique Blockly
+                    </h3>
+                    <div className="p-4 flex-1 flex items-center justify-center bg-gray-50 overflow-auto">
+                        <EditorComponent 
+                            levelData={currentLevelData}
+                            onUpdate={handleLevelDataUpdate} // ✅ La fonction est maintenant définie
+                        />
+                    </div>
+                </div>
 
-                {/* ✅ NOUVEAU : Utilisation du composant Editor du plugin */}
-                {EditorComponent && (
-                    <EditorComponent 
-                        levelData={currentLevelData}
-                        onUpdate={handleLevelDataUpdate}
-                    />
-                )}
+                {/* 2. Zone de Preview (Runner) (1/3 de l'écran) - COLONNE 2 */}
+                <div className="col-span-1 flex flex-col gap-4">
+                    {/* Boîte des contrôles du professeur */}
+                    <div className="bg-white shadow-xl rounded-lg border border-gray-200 p-4">
+                        <h4 className="font-semibold text-gray-700 flex items-center mb-2">
+                             <Map className="w-5 h-5 mr-2" /> Aperçu du Labyrinthe
+                        </h4>
+                        <p className="text-sm text-gray-500">
+                            Affiche l'état initial du labyrinthe. Toute modification de grille est visible ici.
+                        </p>
+                    </div>
+
+                    {/* Affichage du Runner (labyrinthe) */}
+                    <div className="flex-1 bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200 flex items-center justify-center">
+                        <PluginRunner {...runnerProps} />
+                    </div>
+                </div>
+                
             </div>
         </div>
     );
