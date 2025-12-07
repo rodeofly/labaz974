@@ -41,23 +41,47 @@ export default function LevelEditorPage({ params }: EditorPageProps) {
         return <div className="text-red-500 p-8">Erreur : Plugin {level.plugin_id} non trouvé ou incomplet.</div>;
     }
 
+    const currentLevelData = level.level_data || MOCK_LEVEL_DATA.level_data;
     const gridData = level.level_data?.grid || MOCK_LEVEL_DATA.level_data.grid;
 
     return (
         <div className="flex-1 flex justify-center items-center">
-        {/* ❌ ANCIEN : <PluginRunner levelData={{ grid: gridData, startPos: levelData?.data?.startPos }} /> */}
-        
-        {/* ✅ NOUVEAU : Utilise level.level_data qui contient les deux, ou utilise l'objet reconstruit */}
-        <PluginRunner 
-            levelData={{ 
-                grid: gridData, 
-                // Utilisez la position de départ de l'état local 'level'
-                startPos: level.level_data.startPos 
-            }} 
-            // N'oubliez pas de passer playerPos/playerDir pour que le robot apparaisse!
-            playerPos={level.level_data.startPos}
-            playerDir={level.level_data.startPos.dir}
-        />
-    </div>
+            {/* L'aperçu du Runner a besoin de la position initiale du joueur */}
+            <PluginRunner 
+                levelData={{ 
+                    // Utilisez la grille de l'état local 'level' ou le mock
+                    grid: currentLevelData.grid, 
+                    startPos: currentLevelData.startPos 
+                }}
+                // ✅ AJOUTEZ CES PROPS : elles définissent où et comment le robot est affiché
+                playerPos={currentLevelData.startPos}
+                playerDir={currentLevelData.startPos.dir}
+            />
+        </div>
+
+        {/* 2. Zone d'édition Blockly (2/3 de l'écran) */}
+        <div className="col-span-2 bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200">
+            <h3 className="bg-gray-200 p-3 text-lg font-medium border-b flex items-center">
+                <Code className="w-5 h-5 mr-2" /> Logique Blockly & Meta-données
+            </h3>
+            <div className="p-4 h-[calc(100%-48px)] flex items-center justify-center bg-gray-50">
+                
+                {/* ❌ ANCIEN : Contenu statique */}
+                {/* <div className="text-center text-gray-500">
+                    <p className="italic mb-4">...</p>
+                    <code className="text-sm block mt-2 p-3 bg-gray-100 rounded-lg whitespace-pre-wrap text-left border border-gray-300">
+                        {plugin?.getToolboxXML()}
+                    </code>
+                </div> */}
+
+                {/* ✅ NOUVEAU : Utilisation du composant Editor du plugin */}
+                {EditorComponent && (
+                    <EditorComponent 
+                        levelData={currentLevelData}
+                        onUpdate={handleLevelDataUpdate}
+                    />
+                )}
+            </div>
+        </div>
     );
 }
