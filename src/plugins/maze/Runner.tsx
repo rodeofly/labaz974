@@ -1,0 +1,122 @@
+import React from 'react';
+import { MAZE_CONFIG } from './config'; // Import local
+
+const pulseStyle = {
+  position: 'absolute',
+  width: '100%', height: '100%',
+  top: 0, left: 0,
+  backgroundColor: 'rgba(46, 204, 113, 0.5)', 
+  borderRadius: '50%',
+  animation: 'radarPing 0.5s ease-out forwards',
+  zIndex: 5
+};
+
+const stylesCSS = `
+@keyframes radarPing {
+  0% { transform: scale(0.2); opacity: 0.8; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+.maze-container-responsive {
+    container-type: size;
+}
+`;
+
+export default function MazeRender({ levelData, playerPos, playerDir, lastAction }) {
+  
+  // ✅ CORRECTION 1 : Extraction sécurisée de la grille avec fallback
+  // La page transmet levelData comme { grid: [..], startPos: {..} }
+  const grid = levelData?.grid || MAZE_CONFIG.defaultGrid;
+  
+  // ✅ CORRECTION 2 : Définition sécurisée de la position et de la direction
+  const finalPlayerPos = playerPos || levelData?.startPos || { x: 1, y: 1 };
+  const finalPlayerDir = playerDir !== undefined ? playerDir : finalPlayerPos.dir !== undefined ? finalPlayerPos.dir : 1;
+  
+  // Utilisez les valeurs corrigées
+  const rotation = finalPlayerDir * 90 + 90; 
+  const rows = grid.length; // ✅ grid est maintenant défini, l'erreur est corrigée
+  const cols = grid[0].length;
+
+  const isScanning = lastAction && lastAction.type === 'SCAN';
+  let scanTarget = null;
+  const normalizeDir = (d) => ((d % 4) + 4) % 4;
+
+  if (isScanning) {
+      if (lastAction.dir === 'SELF') {
+          scanTarget = { x: playerPos.x, y: playerPos.y };
+      } else {
+          const currentDirNorm = normalizeDir(playerDir);
+          let lookDirIdx = currentDirNorm;
+          if (lastAction.dir === 'LEFT') lookDirIdx = (currentDirNorm + 3) % 4;
+          if (lastAction.dir === 'RIGHT') lookDirIdx = (currentDirNorm + 1) % 4;
+
+          let dx = 0, dy = 0;
+          if (lookDirIdx === 0) dx = 1;
+          if (lookDirIdx === 1) dy = 1;
+          if (lookDirIdx === 2) dx = -1;
+          if (lookDirIdx === 3) dy = -1;
+          scanTarget = { x: playerPos.x + dx, y: playerPos.y + dy };
+      }
+  }
+
+  return (
+    <div style={styles.container}>
+      <style>{stylesCSS}</style>
+      <div 
+        className="maze-container-responsive"
+        style={{
+            ...styles.grid,
+            gridTemplateColumns: `repeat(${cols}, 1fr)`,
+            aspectRatio: `${cols} / ${rows}`,
+        }}
+      >
+        {grid.map((row, rowIndex) => (
+          row.map((cell, colIndex) => {
+            const isPlayerHere = playerPos.x === colIndex && playerPos.y === rowIndex;
+            const isScanned = scanTarget && scanTarget.x === colIndex && scanTarget.y === rowIndex;
+            const fontSize = `min(40px, ${60/Math.max(rows,cols)}vmin)`;
+
+            return (
+              <div key={`${rowIndex}-${colIndex}`} style={styles.cell}>
+                <span style={{zIndex: 1, fontSize}}>
+                  {MAZE_CONFIG.THEME[cell] || '❓'}
+                </span>
+
+                {isPlayerHere && (
+                  <div style={{
+                      ...styles.player, 
+                      transform: `rotate(${rotation}deg)`,
+                      fontSize
+                  }}>
+                    {MAZE_CONFIG.THEME.PLAYER}
+                  </div>
+                )}
+
+                {isScanned && <div key={lastAction._uid} style={pulseStyle}></div>}
+              </div>
+            );
+          })
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const styles = {
+  container: {
+    display: 'flex', justifyContent: 'center', alignItems: 'center',
+    background: '#2c3e50', padding: '10px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+    width: '100%', height: '100%', overflow: 'hidden'
+  },
+  grid: {
+    display: 'grid', gap: '1px', backgroundColor: '#34495e', border: '4px solid #34495e',
+    width: 'auto', height: 'auto', maxWidth: '100%', maxHeight: '100%', margin: 'auto' 
+  },
+  cell: {
+    width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center',
+    position: 'relative', background: '#ecf0f1', overflow: 'visible'
+  },
+  player: {
+    position: 'absolute', zIndex: 10, transition: 'transform 0.2s ease, top 0.2s ease, left 0.2s ease',
+    display:'flex', justifyContent:'center', alignItems:'center', width:'100%', height:'100%'
+  }
+};
