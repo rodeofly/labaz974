@@ -42,7 +42,7 @@ interface RunnerPageProps {
 }
 
 export default function LevelRunnerPage({ params }: RunnerPageProps) {
-    // 1. Authentification (Sécurité et Redirection)
+        // 1. Authentification (Sécurité et Redirection)
     const { role } = useAuthStore();
     useEffect(() => {
         if (role !== 'STUDENT') {
@@ -51,8 +51,7 @@ export default function LevelRunnerPage({ params }: RunnerPageProps) {
     }, [role]);
 
     // Déstructurez 'id' de params pour un accès plus direct et idiomatique
-    const { id: levelId } = params; // ✅ Nouvelle ligne (plus propre)
-
+    const { id: levelId } = params;
     // 2. Récupération des données du niveau (Mockées)
     // Utilisez levelId directement
     const level = useMemo(() => getLevelData(levelId), [levelId]);

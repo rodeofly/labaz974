@@ -41,34 +41,23 @@ export default function LevelEditorPage({ params }: EditorPageProps) {
         return <div className="text-red-500 p-8">Erreur : Plugin {level.plugin_id} non trouvé ou incomplet.</div>;
     }
 
+    const gridData = level.level_data?.grid || MOCK_LEVEL_DATA.level_data.grid;
+
     return (
-        <div className="flex flex-col h-[85vh]">
-            {/* ... (header et zone d'édition) */}
-
-            {/* 1. Zone d'édition du Plugin */}
-            <div className="col-span-1 bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200">
-                {/* ... (titre) */}
-                <div className="h-[calc(100%-48px)]">
-                    <EditorComponent 
-                        levelData={level.level_data} // ✅ level.level_data est un objet { grid: [...], startPos: {...} }
-                        onUpdate={handleLevelDataUpdate} 
-                    />
-                </div>
-            </div>
-
-            {/* Zone de preview (Runner) */}
-            <div className="flex-1 flex justify-center items-center">
-                {/* ✅ On passe les props comme attendu par le Runner après sa correction (levelData) */}
-                <PluginRunner 
-                    levelData={{ 
-                        grid: gridDataForRunner, // La grille sécurisée
-                        startPos: startPosForRunner // La position sécurisée
-                    }} 
-                />
-            </div>
-
-            {/* 2. Zone d'édition Blockly */}
-            {/* ... */}
-        </div>
+        <div className="flex-1 flex justify-center items-center">
+        {/* ❌ ANCIEN : <PluginRunner levelData={{ grid: gridData, startPos: levelData?.data?.startPos }} /> */}
+        
+        {/* ✅ NOUVEAU : Utilise level.level_data qui contient les deux, ou utilise l'objet reconstruit */}
+        <PluginRunner 
+            levelData={{ 
+                grid: gridData, 
+                // Utilisez la position de départ de l'état local 'level'
+                startPos: level.level_data.startPos 
+            }} 
+            // N'oubliez pas de passer playerPos/playerDir pour que le robot apparaisse!
+            playerPos={level.level_data.startPos}
+            playerDir={level.level_data.startPos.dir}
+        />
+    </div>
     );
 }

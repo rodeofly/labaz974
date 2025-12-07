@@ -8,11 +8,15 @@ interface MazeEditorProps {
     onUpdate: (data: any) => void;
 }
 
-export default function MazeEditor({ levelData, onUpdate }: MazeEditorProps) {
+export default function MazeEditor({ levelData, onUpdate }) {
   const [selectedTool, setSelectedTool] = useState(4); 
 
-  const startPos = levelData.startPos || { x: 1, y: 1, dir: 1 };
-  const grid: MazeGrid = levelData.grid || MAZE_CONFIG.defaultGrid;
+  // ❌ ANCIEN : const startPos = levelData.startPos || { x: 1, y: 1, dir: 1 };
+  // ❌ ANCIEN : const grid = levelData.grid || MAZE_CONFIG.defaultGrid;
+  
+  // ✅ NOUVEAU : Utilise l'enchaînement optionnel
+  const startPos = levelData?.startPos || { x: 1, y: 1, dir: 1 };
+  const grid = levelData?.grid || MAZE_CONFIG.defaultGrid;
   const rows = grid.length;
   const cols = grid[0]?.length || 0;
 

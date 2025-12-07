@@ -21,21 +21,22 @@ const stylesCSS = `
 }
 `;
 
+// ✅ NOUVEAU : Récupère levelData pour extraire la grille
 export default function MazeRender({ levelData, playerPos, playerDir, lastAction }) {
   
-  // ✅ CORRECTION 1 : Extraction sécurisée de la grille avec fallback
-  // La page transmet levelData comme { grid: [..], startPos: {..} }
-  const grid = levelData?.grid || MAZE_CONFIG.defaultGrid;
+  // Assure que levelData est sécurisé pour l'extraction de grid et startPos
+  const grid = levelData?.grid || MAZE_CONFIG.defaultGrid; 
   
-  // ✅ CORRECTION 2 : Définition sécurisée de la position et de la direction
+  // Utilise l'état du joueur ou la position de départ du niveau comme fallback
   const finalPlayerPos = playerPos || levelData?.startPos || { x: 1, y: 1 };
   const finalPlayerDir = playerDir !== undefined ? playerDir : finalPlayerPos.dir !== undefined ? finalPlayerPos.dir : 1;
   
-  // Utilisez les valeurs corrigées
   const rotation = finalPlayerDir * 90 + 90; 
-  const rows = grid.length; // ✅ grid est maintenant défini, l'erreur est corrigée
+  
+  // ✅ Ces lignes ne crasheront plus car grid est garanti d'être un tableau
+  const rows = grid.length;
   const cols = grid[0].length;
-
+  
   const isScanning = lastAction && lastAction.type === 'SCAN';
   let scanTarget = null;
   const normalizeDir = (d) => ((d % 4) + 4) % 4;
