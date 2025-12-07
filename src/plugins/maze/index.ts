@@ -1,20 +1,10 @@
 // src/plugins/maze/index.ts
+import Logic from './logic'; 
+import Editor from './Editor';
+import Runner from './Runner';
+import { MAZE_CONFIG } from './config';
 
-// src/plugins/maze/index.ts
-import { MazePlugin } from './logic'; // Resolves to logic.ts
-import Editor from './Editor'; // Resolves to Editor.tsx
-import Runner from './Runner'; // Resolves to Runner.tsx
-import { MAZE_CONFIG } from './config'; // Resolves to config.ts
 
-export default {
-    id: 'MAZE',
-    name: 'Labyrinthe',
-    icon: '🏰',
-    ...MazePlugin,
-    RenderComponent: Runner,
-    EditorComponent: Editor,
-    config: MAZE_CONFIG
-};
 
 
 // --- Implémentation des fonctions de logic.js ---
@@ -98,17 +88,13 @@ const executeStep = (currentState: any, action: string, levelData: any): { newSt
     return { newState: { x, y, dir }, status };
 };
 
-
-// Export final du Plugin
-const MazePlugin: BasePlugin = {
+// Export final du Plugin combinant la logique, les composants et la configuration
+export default {
     id: 'MAZE',
     name: 'Labyrinthe',
     icon: '🏰',
+    ...Logic, // <-- Utilise l'objet importé de logic.ts (qui contient executeStep, getToolboxXML, etc.)
     RenderComponent: Runner,
     EditorComponent: Editor,
-    registerBlocks: registerBlocks,
-    getToolboxXML: getToolboxXML,
-    executeStep: executeStep,
+    config: MAZE_CONFIG
 };
-
-export default MazePlugin;
