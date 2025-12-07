@@ -1,4 +1,5 @@
 // src/app/layout.tsx
+import './globals.css'; // ⬅️ AJOUTEZ CETTE LIGNE
 
 // (Optionnel : les métadonnées pour Next.js)
 export const metadata = {

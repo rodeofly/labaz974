@@ -1,9 +1,21 @@
 // src/plugins/maze/index.ts
 
-import Runner from './Runner'; 
-import Editor from './Editor'; 
-import { MAZE_CONFIG } from './config';
-import { BasePlugin } from '../registry';
+// src/plugins/maze/index.ts
+import { MazePlugin } from './logic'; // Resolves to logic.ts
+import Editor from './Editor'; // Resolves to Editor.tsx
+import Runner from './Runner'; // Resolves to Runner.tsx
+import { MAZE_CONFIG } from './config'; // Resolves to config.ts
+
+export default {
+    id: 'MAZE',
+    name: 'Labyrinthe',
+    icon: '🏰',
+    ...MazePlugin,
+    RenderComponent: Runner,
+    EditorComponent: Editor,
+    config: MAZE_CONFIG
+};
+
 
 // --- Implémentation des fonctions de logic.js ---
 const registerBlocks = (Blockly: any, javascriptGenerator: any) => {
