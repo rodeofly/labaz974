@@ -5,10 +5,9 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { getPlugin } from '@/plugins/registry';
 import { Level, PlayerState, Action } from '@/types'; // Importez vos types
 import { CheckCircle, XCircle, Play, RefreshCw, Star, Code } from 'lucide-react';
-import StudentLayout from '@/components/layouts/StudentLayout';
-import { useAuthStore } from '@/store/authStore';
-import { redirect } from 'next/navigation';
 
+import { useAuthStore } from '@/store/authStore'; 
+import { redirect } from 'next/navigation';
 // Import de la configuration du labyrinthe pour les valeurs par défaut
 import { MAZE_CONFIG } from '@/plugins/maze/config'; 
 
@@ -189,77 +188,75 @@ export default function LevelRunnerPage({ params }: RunnerPageProps) {
     else if (executionState.status === 'RUNNING') { StatusIcon = Star; statusColor = 'text-yellow-500'; }
 
     return (
-        <StudentLayout>
-            <div className="flex flex-col h-[85vh] lg:flex-row gap-4 p-4">
+        <div className="flex flex-col h-[85vh] lg:flex-row gap-4 p-4">
+            
+            {/* Zone de Code/Blockly (2/3 de l'écran) */}
+            <div className="lg:w-2/3 bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200 flex flex-col">
+                <h2 className="bg-blue-600 text-white p-3 text-lg font-bold border-b flex items-center">
+                    <Code className="w-5 h-5 mr-2" /> {level.name}
+                </h2>
                 
-                {/* Zone de Code/Blockly (2/3 de l'écran) */}
-                <div className="lg:w-2/3 bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200 flex flex-col">
-                    <h2 className="bg-blue-600 text-white p-3 text-lg font-bold border-b flex items-center">
-                        <Code className="w-5 h-5 mr-2" /> {level.name}
-                    </h2>
-                    
-                    {/* Zone de description/instructions */}
-                    <div className="p-4 border-b border-gray-200">
-                        <p className="text-sm text-gray-700 italic">{level.description}</p>
-                        <p className="mt-2 text-xs font-semibold text-gray-500">Blocs Max: {level.maxBlocks || 'Illimité'}</p>
-                    </div>
-
-                    {/* Zone Blockly (Mock) */}
-                    <div className="flex-1 p-4 bg-gray-50 flex items-center justify-center">
-                        <div className="w-full h-full border-2 border-dashed border-gray-300 flex items-center justify-center flex-col">
-                            <p className="text-gray-500 mb-4">Espace de Travail Blockly (à implémenter)</p>
-                            <button 
-                                onClick={() => handleBlocklyCodeUpdate('CODE_GENERATED')} 
-                                className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                            >
-                                Simuler Code (Démo)
-                            </button>
-                        </div>
-                    </div>
+                {/* Zone de description/instructions */}
+                <div className="p-4 border-b border-gray-200">
+                    <p className="text-sm text-gray-700 italic">{level.description}</p>
+                    <p className="mt-2 text-xs font-semibold text-gray-500">Blocs Max: {level.maxBlocks || 'Illimité'}</p>
                 </div>
 
-                {/* Zone de Simulation (Runner) (1/3 de l'écran) */}
-                <div className="lg:w-1/3 flex flex-col gap-4">
-                    
-                    {/* Console et Contrôles */}
-                    <div className="bg-white shadow-xl rounded-lg border border-gray-200 p-4">
-                        <h3 className="text-xl font-bold mb-3 flex items-center">
-                            <StatusIcon className={`w-6 h-6 mr-2 ${statusColor}`} />
-                            Statut: <span className={statusColor}>{executionState.status}</span>
-                        </h3>
-                        
-                        <div className="flex justify-between space-x-2">
-                            <button 
-                                onClick={handleRunCode} 
-                                disabled={isExecuting || executionState.status !== 'IDLE'}
-                                className={`flex-1 p-3 rounded-lg text-white font-semibold transition-colors ${isExecuting || executionState.status !== 'IDLE' ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'}`}
-                            >
-                                <Play className="w-5 h-5 inline mr-2" /> Exécuter
-                            </button>
-                            <button 
-                                onClick={handleReset}
-                                className="w-1/3 p-3 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold transition-colors"
-                            >
-                                <RefreshCw className="w-5 h-5 inline" /> Réinitialiser
-                            </button>
-                        </div>
+                {/* Zone Blockly (Mock) */}
+                <div className="flex-1 p-4 bg-gray-50 flex items-center justify-center">
+                    <div className="w-full h-full border-2 border-dashed border-gray-300 flex items-center justify-center flex-col">
+                        <p className="text-gray-500 mb-4">Espace de Travail Blockly (à implémenter)</p>
+                        <button 
+                            onClick={() => handleBlocklyCodeUpdate('CODE_GENERATED')} 
+                            className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                        >
+                            Simuler Code (Démo)
+                        </button>
                     </div>
-
-                    {/* Zone de Preview du Plugin */}
-                    <div className="flex-1 bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200 flex items-center justify-center">
-                        <PluginRunner 
-                            // levelData est l'objet { grid, startPos }
-                            levelData={level.level_data} 
-                            // playerPos doit contenir l'état actuel du joueur pour le rendu
-                            playerPos={{ x: executionState.x, y: executionState.y, dir: executionState.dir }}
-                            playerDir={executionState.dir}
-                            // lastAction est la dernière action jouée (pour l'animation)
-                            lastAction={executionState.actionLog[executionState.stepIndex - 1]}
-                        />
-                    </div>
-                    
                 </div>
             </div>
-        </StudentLayout>
+
+            {/* Zone de Simulation (Runner) (1/3 de l'écran) */}
+            <div className="lg:w-1/3 flex flex-col gap-4">
+                
+                {/* Console et Contrôles */}
+                <div className="bg-white shadow-xl rounded-lg border border-gray-200 p-4">
+                    <h3 className="text-xl font-bold mb-3 flex items-center">
+                        <StatusIcon className={`w-6 h-6 mr-2 ${statusColor}`} />
+                        Statut: <span className={statusColor}>{executionState.status}</span>
+                    </h3>
+                    
+                    <div className="flex justify-between space-x-2">
+                        <button 
+                            onClick={handleRunCode} 
+                            disabled={isExecuting || executionState.status !== 'IDLE'}
+                            className={`flex-1 p-3 rounded-lg text-white font-semibold transition-colors ${isExecuting || executionState.status !== 'IDLE' ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'}`}
+                        >
+                            <Play className="w-5 h-5 inline mr-2" /> Exécuter
+                        </button>
+                        <button 
+                            onClick={handleReset}
+                            className="w-1/3 p-3 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold transition-colors"
+                        >
+                            <RefreshCw className="w-5 h-5 inline" /> Réinitialiser
+                        </button>
+                    </div>
+                </div>
+
+                {/* Zone de Preview du Plugin */}
+                <div className="flex-1 bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200 flex items-center justify-center">
+                    <PluginRunner 
+                        // levelData est l'objet { grid, startPos }
+                        levelData={level.level_data} 
+                        // playerPos doit contenir l'état actuel du joueur pour le rendu
+                        playerPos={{ x: executionState.x, y: executionState.y, dir: executionState.dir }}
+                        playerDir={executionState.dir}
+                        // lastAction est la dernière action jouée (pour l'animation)
+                        lastAction={executionState.actionLog[executionState.stepIndex - 1]}
+                    />
+                </div>
+                
+            </div>
+        </div>
     );
 }
